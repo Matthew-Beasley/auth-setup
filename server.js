@@ -21,6 +21,8 @@ app.use(async (req, res, next) => {
   }
 });
 
+app.get('/', (req, res, next) => res.sendFile(path.join(__dirname, 'index.html')));
+
 const isLoggedIn = (req, res, next) => {
   if (!req.user) {
     const err = Error('Not authenticated');
@@ -30,7 +32,14 @@ const isLoggedIn = (req, res, next) => {
   }
 }
 
-app.get('/', (req, res, next) => res.sendFile(path.join(__dirname, 'index.html')));
+const isAdmin = (req, res, next) => {
+  if (req.user.role === 'admin') {
+    next();
+  } else {
+    const err = Error('Not admin');
+    next(err);
+  }
+}
 
 app.post('/api/auth', async (req, res, next) => {
   try {
@@ -43,20 +52,30 @@ app.post('/api/auth', async (req, res, next) => {
 });
 
 app.get('/api/auth', isLoggedIn, (req, res, next) => {
-  
-  res.send(req.user)
+  try {
+    console.log(req.user)
+    res.send(req.user);
+  } catch (error) {
+    next(error)
+  }
 });
 
-app.get('/api/admin', isLoggedIn, async (req, res, next) => {
+app.get('/api/admin', isAdmin, async (req, res, next) => {
   try {
+    console.log()
     const data = await db.getAllUsers();
     res.send(data);
   } catch (error) {
     next(error);
   }
+});
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  next();
 })
 
-app.use((err, req, res, next)=> {
+app.use((err, req, res, next) => {
   res.status(err.status || 500).send({ message: err.message});
 });
 
@@ -64,7 +83,7 @@ app.use((err, req, res, next)=> {
 db.sync()
   .then(()=> {
     const port = process.env.PORT || 3000;
-    app.listen(port, ()=> {
+    app.listen(port, () => {
       console.log(port);
     });
   });

@@ -65,7 +65,6 @@ const authenticate = async ({ username, password }) => {
 }
 
 const getAllUsers = async () => {
-  
   const sql = 'SELECT * FROM users';
   return (await client.query(sql)).rows;
 }
