@@ -12,13 +12,38 @@ const App = ()=> {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+      findUserFromToken();
+  }, [])
+
+  const findUserFromToken = async () => {
+    const token = window.localStorage.getItem('token');
+    const response = await axios.get('/api/auth', {
+      headers: {
+        authentication: token
+      }
+    });
+    setAuth(response.data);
+  }
+
+  const logout = () => {
+    window.localStorage.removeItem('token');
+    setAuth({});
+    setUsername('');
+    setPassword('');
+  }
+
   const onSubmit = async(ev)=> {
     ev.preventDefault();
     const credentials = {
       username,
       password
     };
-    console.log(credentials);
+    //console.log(credentials);  
+    const response = await axios.post('/api/auth', credentials);
+    //console.log(response.data.token)
+    window.localStorage.setItem('token', response.data.token);
+    findUserFromToken(response.data.token);
   };
 
   return (
